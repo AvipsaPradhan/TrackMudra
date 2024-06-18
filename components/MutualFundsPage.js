@@ -521,9 +521,9 @@ const MutualFundsPage = () => {
     }
   };
 
-  const handleSellPress = () => {
+  const handleSipPress = (fund) => {
     if (detailsExist) {
-      navigation.navigate('SellFunds');
+      navigation.navigate('SipCalculatorPage',{fund});
     } else {
       navigation.navigate('UserDetailsForm');
     }
@@ -554,7 +554,7 @@ const MutualFundsPage = () => {
       <TouchableOpacity style={styles.button} onPress={() => onPress=handleBuyPress(fund)}>
         <Text style={styles.buttonText}>One Time</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => onPress={handleSellPress}}>
+      <TouchableOpacity style={styles.button} onPress={() => onPress=handleSipPress(fund)}>
         <Text style={styles.buttonText}>Start SIP</Text>
       </TouchableOpacity>
     </View>
@@ -596,7 +596,7 @@ const MutualFundsPage = () => {
         <TouchableOpacity onPress={() => alert('Top Gainers pressed')}>
           <Text style={[styles.subTab, styles.activeSubTab]}>Top Gainers</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => alert('Recommended pressed')}>
+        <TouchableOpacity onPress={() =>navigation.navigate('RecommendedMutualFundsPage')}>
           <Text style={[styles.subTab]}>Recommended</Text>
         </TouchableOpacity>
       </View>

@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { hashPassword, comparePassword } = require('../helpers/authHelper');
 const userModel = require('../models/userModel');
 const transactionModel = require('../models/transactionModel');
+const Stock=require('../models/stockModel');
 
 // Middleware to verify JWT token
 const requireSignIn = async (req, res, next) => {
@@ -434,20 +435,94 @@ const verifyPassword = async (req, res) => {
 
 const buyStock = async (req, res) => {
   try {
-    const { stockName, stockSymbol, quantity, totalPrice } = req.body;
+    const { stockName, stockSymbol, quantity, totalPrice, currentPrice, dailyReturn } = req.body;
     const user = await userModel.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.stocks.push({ stockName, stockSymbol, quantity, totalPrice });
+    // Check if the user already owns the stock
+    const existingStock = user.stocks.find(stock => stock.stockSymbol === stockSymbol);
+
+    if (existingStock) {
+      // Update existing stock entry
+      existingStock.quantity += quantity;
+      existingStock.totalPrice += totalPrice;
+      existingStock.currentPrice += currentPrice;
+      existingStock.dailyReturn = dailyReturn;
+    } else {
+      // Add new stock entry
+      user.stocks.push({ 
+        stockName, 
+        stockSymbol, 
+        quantity, 
+        totalPrice, 
+        currentPrice, 
+        dailyReturn, 
+        purchaseDate: new Date(), 
+        totalReturn: 0 
+      });
+    }
+
     await user.save();
 
     res.json({ success: true, message: 'Stock purchased successfully' });
   } catch (error) {
     console.error('Error purchasing stock:', error);
     res.status(500).json({ success: false, message: 'Failed to purchase stock', error });
+  }
+};
+
+const sellStock = async (req, res) => {
+  try {
+    const { stockSymbol, quantity, totalPrice } = req.body;
+    const user = await userModel.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+
+    // Find the stock in user's portfolio
+    const stock = user.stocks.find(s => s.stockSymbol === stockSymbol);
+    if (!stock) {
+      return res.status(400).json({ success: false, message: 'Stock not found in portfolio' });
+    }
+
+    if (stock.quantity < quantity) {
+      return res.status(400).json({ success: false, message: 'Insufficient stock quantity' });
+    }
+
+    // Update the stock quantity and current price
+    stock.quantity -= quantity;
+    stock.currentPrice -= totalPrice;
+
+    if (stock.quantity === 0) {
+      user.stocks = user.stocks.filter(s => s.stockSymbol !== stockSymbol);
+    }
+
+    await user.save();
+
+    res.json({ success: true, message: 'Stock sold successfully' });
+  } catch (error) {
+    console.error('Error selling stock:', error);
+    res.status(500).json({ success: false, message: 'Failed to sell stock', error });
+  }
+};
+
+const getUserPurchasedStocks = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.user._id).select('stocks');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user.stocks);
+  } catch (error) {
+    console.error('Error fetching user stocks:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -535,6 +610,8 @@ module.exports = {
   checkUserDetails,
   verifyPassword,
   buyStock,
+  sellStock,
+  getUserPurchasedStocks,
   buyFund,
   getUserFunds,
   sellFund,

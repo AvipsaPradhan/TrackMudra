@@ -24,12 +24,14 @@ import StockDetail from './components/StockDetail';
 import SipCalculatorPage from './components/SipCalculatorPage';
 import SellPage from './components/SellPage';
 import BuyStock from './components/BuyStock';
+import SellStock from './components/SellStock';
 import UserDetailsForm from './components/UserDetailsForm';
 import CheckUserDetails from './components/CheckUserDetails';
 import PortfolioPage from './components/PortfolioPage';
 import BuyFundsPage from './components/BuyFundsPage';
 import SellFundsPage from './components/SellFundsPage';
-
+import RecommendedMutualFundsPage from './components/RecommendedMutualFundsPage';
+import RecommendedStocksPage from './components/RecommendedStocksPage';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -54,12 +56,15 @@ export default function App() {
             <Stack.Screen name="StockDetail" component={StockDetail} />
             <Stack.Screen name="SipCalculatorPage" component={SipCalculatorPage} />
             <Stack.Screen name="BuyStock" component={BuyStock} />
+            <Stack.Screen name="SellStock" component={SellStock} />
             <Stack.Screen name="SellPage" component={SellPage} />
             <Stack.Screen name="UserDetailsForm" component={UserDetailsForm} />
             <Stack.Screen name="CheckUserDetails" component={CheckUserDetails} />
             <Stack.Screen name="PortfolioPage" component={PortfolioPage} />
             <Stack.Screen name="BuyFundsPage" component={BuyFundsPage} />
             <Stack.Screen name="SellFundsPage" component={SellFundsPage} />
+            <Stack.Screen name="RecommendedMutualFundsPage" component={RecommendedMutualFundsPage} />
+            <Stack.Screen name="RecommendedStocksPage" component={RecommendedStocksPage} />
           </Stack.Navigator>
         </NavigationContainer>
       </ExpenseProvider>

@@ -19,6 +19,10 @@ const stockSchema = new mongoose.Schema({
   stockSymbol: String,
   quantity: Number,
   totalPrice: Number,
+  currentPrice: Number,
+  dailyReturn: Number,
+  purchaseDate: Date,
+  totalReturn: Number
 });
 
 const fundSchema = new mongoose.Schema({

@@ -11,6 +11,8 @@ dotenv.config();
 // MONGODB CONNECTION
 connectDB();
 
+require('../utils/scheduler');
+
 // REST OBJECT
 const app = express();
 

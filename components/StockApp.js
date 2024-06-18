@@ -3,7 +3,8 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIn
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
-import { featureEngineering } from '../services/featureEngineering'; // Ensure this import path is correct
+import { featureEngineering } from '../services/featureEngineering';
+import moment from 'moment'; // Ensure moment.js is installed
 
 const StockApp = () => {
   const [stockData, setStockData] = useState([]);
@@ -11,28 +12,55 @@ const StockApp = () => {
   const [activeTab, setActiveTab] = useState('Top Gainers');
   const navigation = useNavigation();
 
-  const getPreviousBusinessDay = () => {
-    const today = new Date();
-    let day = today.getDay();
-    let offset = 1; // Yesterday
+  // Function to get the most recent available date
+  const getMostRecentDate = () => {
+    const today = moment();
+    let mostRecentDate = today;
 
-    if (day === 0) offset = 2; // Sunday
-    if (day === 1) offset = 3; // Monday
+    if (today.day() === 0) {
+      // Sunday, get the previous Friday
+      mostRecentDate = today.subtract(2, 'days');
+    } else if (today.day() === 6) {
+      // Saturday, get the previous Friday
+      mostRecentDate = today.subtract(1, 'days');
+    } else if (today.day() === 1) {
+      // Monday, get the previous Friday
+      mostRecentDate = today.subtract(3, 'days');
+    } else {
+      // For Tuesday to Friday, get the previous day
+      mostRecentDate = today.subtract(1, 'day');
+    }
 
-    const previousBusinessDay = new Date(today);
-    previousBusinessDay.setDate(today.getDate() - offset);
-    
-    return previousBusinessDay.toISOString().split('T')[0];
+    return mostRecentDate.format('YYYY-MM-DD');
   };
 
   const fetchStockDataFromDB = async () => {
     setLoading(true);
     try {
-      const previousBusinessDay = getPreviousBusinessDay();
-      const { data } = await axios.get(`/api/v1/stock/stocks?date=${previousBusinessDay}`);
-      console.log('Fetched stock data:', data);  // Log the fetched data
-      const engineeredData = featureEngineering(data);
-      setStockData(engineeredData);
+      const { data } = await axios.get('/api/v1/stock/stocks');
+      console.log('Raw fetched data:', data); // Log the raw fetched data
+
+      // Adjusting date format and handling the dates
+      const mostRecentDate = getMostRecentDate();
+      console.log('Most recent date:', mostRecentDate);
+
+      // Converting the data from database format to the required format
+      const engineeredData = featureEngineering(data.map(stock => ({
+        ...stock,
+        date: moment(stock.date).format('YYYY-MM-DD')
+      })));
+
+      console.log('Engineered data:', engineeredData); // Log the engineered data
+
+      const filteredData = engineeredData.filter(stock => stock.date === mostRecentDate);
+      console.log('Filtered data:', filteredData);
+
+      if (filteredData.length > 0) {
+        setStockData(filteredData);
+      } else {
+        console.warn('No data for the most recent date. Displaying latest available data.');
+        setStockData(engineeredData.slice(0, 10)); // Show the latest 10 entries as a fallback
+      }
     } catch (error) {
       console.error('Error fetching stock data:', error);
     }
@@ -56,7 +84,7 @@ const StockApp = () => {
       <TouchableOpacity
         key={data.date + data.name}
         style={styles.stockCard}
-        onPress={() => navigation.navigate('StockDetail', { stock: data })}
+        onPress={() => navigation.navigate('StockDetail', { stock: data, date: data.date })}
       >
         <Text style={styles.stockTitle}>{data.name}</Text>
         <Text style={styles.stockSymbol}>{data.symbol}</Text>
@@ -106,7 +134,7 @@ const StockApp = () => {
         <TouchableOpacity onPress={() => setActiveTab('Top Gainers')}>
           <Text style={[styles.subTab, activeTab === 'Top Gainers' && styles.activeSubTab]}>Top Gainers</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Recommended')}>
+        <TouchableOpacity onPress={() => navigation.navigate('RecommendedStocksPage')}>
           <Text style={[styles.subTab, activeTab === 'Recommended' && styles.activeSubTab]}>Recommended</Text>
         </TouchableOpacity>
       </View>

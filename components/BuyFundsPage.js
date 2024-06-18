@@ -28,7 +28,7 @@ const BuyFundsPage = () => {
         await axios.post(
           '/api/v1/auth/funds/buy',
           {
-            fundName: fund.fundName,  // Update the key according to your data
+            fundName: fund.fundName || fund['Scheme Name'],  // Handle different key names
             amount: parseFloat(amount),
           },
           {
@@ -51,7 +51,7 @@ const BuyFundsPage = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Invest in {fund.fundName}</Text>
+      <Text style={styles.title}>Invest in {fund.fundName || fund['Scheme Name']}</Text>
       <TextInput
         style={styles.input}
         value={amount}

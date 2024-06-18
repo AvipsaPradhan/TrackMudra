@@ -1,19 +1,18 @@
 import React, { useEffect, useContext, useState } from 'react';
-import { View, Text, Button, StyleSheet,Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { AuthContext } from '../context/authContext';
 import { ExpenseContext } from '../context/expenseContext';
-import { startOfMonth, endOfMonth, parseISO, isWithinInterval,currentMonthStart,currentMonthEnd } from 'date-fns';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import axios from 'axios';
 
 const HomeScreen = ({ navigation }) => {
   const [authState] = useContext(AuthContext);
   const [totalIncome, setTotalIncome] = useState(0);
-  const [remainingAmount, setRemainingAmount] = useState(0);
   const [qrCode, setQrCode] = useState('');
   const [balance, setBalance] = useState(0);
-  const [expense,setExpense]=useState(0);
-  const { transactions, incomes } = useContext(ExpenseContext);
+  const [expense, setExpense] = useState(0);
+  const { transactions } = useContext(ExpenseContext);
 
   useEffect(() => {
     const fetchQrCode = async () => {
@@ -36,7 +35,9 @@ const HomeScreen = ({ navigation }) => {
     fetchIncomeData();
   }, []);
 
-  
+  useEffect(() => {
+    calculateBalanceAndExpense();
+  }, [transactions, totalIncome]);
 
   const fetchIncomeData = async () => {
     try {
@@ -54,7 +55,7 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
+  const calculateBalanceAndExpense = () => {
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
 
@@ -73,7 +74,8 @@ const HomeScreen = ({ navigation }) => {
 
     const calculatedBalance = (totalIncome + totalCredits) - totalDebits;
     setBalance(calculatedBalance);
-  }, [transactions, incomes]);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Expense Tracker</Text>

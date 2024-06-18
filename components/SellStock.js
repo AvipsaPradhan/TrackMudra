@@ -2,29 +2,26 @@ import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { AuthContext } from '../context/authContext';
+import { AuthContext } from '../context/authContext'; // Import the auth context to get the user token
 
-const BuyStock = () => {
+const SellStock = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { stockDetails,onSuccess } = route.params;
-  const [quantity, setQuantity] = useState('1');
-  const [totalPrice, setTotalPrice] = useState(stockDetails.close);
-  const [currentPrice, setCurrentPrice] = useState(stockDetails.close);
-  const [password, setPassword] = useState('');
-  const [authState] = useContext(AuthContext);
+  const { stockDetails, onSuccess } = route.params;
+  const [quantity, setQuantity] = useState('1'); // Default quantity to 1
+  const [totalPrice, setTotalPrice] = useState(stockDetails.close); // Initial total price
+  const [password, setPassword] = useState(''); // Password state
+  const [authState] = useContext(AuthContext); // Get the auth state to access the token
 
   const handleQuantityChange = (value) => {
     setQuantity(value);
-    const calculatedPrice = stockDetails.close * parseInt(value);
-    setTotalPrice(calculatedPrice);
-    setCurrentPrice(calculatedPrice); // Set the initial currentPrice
+    setTotalPrice(stockDetails.close * parseInt(value));
   };
 
-  const handleBuyPress = async () => {
+  const handleSellPress = async () => {
     try {
       const response = await axios.post(
-        '/api/v1/auth/verify-password',
+        '/api/v1/auth/verify-password', // Endpoint to verify password
         { password },
         {
           headers: {
@@ -34,15 +31,13 @@ const BuyStock = () => {
       );
 
       if (response.data.success) {
+        // Password is correct, proceed with the sale
         await axios.post(
-          '/api/v1/auth/stocks/buy',
+          '/api/v1/auth/stocks/sell',
           {
-            stockName: stockDetails.name,
             stockSymbol: stockDetails.symbol,
             quantity: parseInt(quantity),
-            totalPrice,
-            currentPrice,
-            dailyReturn: stockDetails.close - stockDetails.open, // Calculate daily return
+            totalPrice: totalPrice,
           },
           {
             headers: {
@@ -50,21 +45,21 @@ const BuyStock = () => {
             },
           }
         );
-        Alert.alert('Success', 'Stock purchased successfully');
-        if (onSuccess) onSuccess();
-        navigation.navigate('PortfolioPage');
+        Alert.alert('Success', 'Stock sold successfully');
+        onSuccess();
+        navigation.navigate('PortfolioPage'); // Navigate back to the portfolio page
       } else {
         Alert.alert('Error', 'Incorrect password');
       }
     } catch (error) {
-      console.error('Error buying stock:', error);
-      Alert.alert('Error', 'Failed to purchase stock');
+      console.error('Error selling stock:', error);
+      Alert.alert('Error', 'Failed to sell stock');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Buy {stockDetails.name} ({stockDetails.symbol})</Text>
+      <Text style={styles.title}>Sell {stockDetails.name} ({stockDetails.symbol})</Text>
       <Text style={styles.currentValue}>Current Value: ₹{stockDetails.close.toFixed(3)}</Text>
       <TextInput
         style={styles.input}
@@ -81,7 +76,7 @@ const BuyStock = () => {
         placeholder="Password"
         secureTextEntry
       />
-      <Button title="Buy" onPress={handleBuyPress} />
+      <Button title="Sell" onPress={handleSellPress} />
     </View>
   );
 };
@@ -116,4 +111,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BuyStock;
+export default SellStock;

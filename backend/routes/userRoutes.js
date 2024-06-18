@@ -12,6 +12,8 @@ const {
   checkUserDetails,
   verifyPassword, 
   buyStock,
+  sellStock,
+  getUserPurchasedStocks,
   buyFund,
   getUserFunds,
   sellFund,
@@ -57,6 +59,11 @@ router.post('/funds/buy', requireSignIn, buyFund);
 router.get('/get-funds', requireSignIn, getUserFunds);
 
 router.post('/funds/sell', requireSignIn, sellFund);
+
+// Get user's purchased stocks
+router.get('/stocks/purchased', requireSignIn, getUserPurchasedStocks);
+
+router.post('/stocks/sell', requireSignIn, sellStock);
 
 
 // export
