@@ -32,6 +32,11 @@ import BuyFundsPage from './components/BuyFundsPage';
 import SellFundsPage from './components/SellFundsPage';
 import RecommendedMutualFundsPage from './components/RecommendedMutualFundsPage';
 import RecommendedStocksPage from './components/RecommendedStocksPage';
+import GoalListScreen from './components/GoalListScreen';
+import GoalSetterScreen from './components/GoalSetterScreen';
+import CompletedGoalsScreen from './components/CompletedGoalsScreen';
+import Rewards from './components/Rewards';
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -65,6 +70,10 @@ export default function App() {
             <Stack.Screen name="SellFundsPage" component={SellFundsPage} />
             <Stack.Screen name="RecommendedMutualFundsPage" component={RecommendedMutualFundsPage} />
             <Stack.Screen name="RecommendedStocksPage" component={RecommendedStocksPage} />
+            <Stack.Screen name="GoalListScreen" component={GoalListScreen} />
+            <Stack.Screen name="GoalSetterScreen" component={GoalSetterScreen} />
+            <Stack.Screen name="CompletedGoalsScreen" component={CompletedGoalsScreen} />
+            <Stack.Screen name="Rewards" component={Rewards} />
           </Stack.Navigator>
         </NavigationContainer>
       </ExpenseProvider>

@@ -158,7 +158,7 @@ const weeklyData = (transactions, startOfWeekDate, endOfWeekDate) => {
 };
 
 const processCategoryData = (transactions) => {
-  const categories = ['Food', 'Grocery', 'Shopping', 'Bills', 'Debt', 'Others'];
+  const categories = ['Food', 'Grocery', 'Shopping', 'Bills', 'Debts', 'Others'];
   const data = categories.map(category => {
     const total = transactions
       .filter(transaction => transaction.category === category)
@@ -174,7 +174,7 @@ const getColorForCategory = (category) => {
     Grocery: '#f5a142',
     Shopping: '#f5d142',
     Bills: '#42f54b',
-    Debt: '#4287f5',
+    Debts: '#4287f5',
     Others: '#9b42f5',
   };
   return colors[category] || '#000';

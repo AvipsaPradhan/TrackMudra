@@ -4,6 +4,7 @@ import { ExpenseContext } from '../context/expenseContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import { AuthContext } from "../context/authContext";
 
 const AddTransactionScreen = ({ navigation }) => {
   const [amount, setAmount] = useState('');
@@ -12,6 +13,7 @@ const AddTransactionScreen = ({ navigation }) => {
   const [date, setDate] = useState(new Date());
   const [category, setCategory] = useState('Food');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [authState] = useContext(AuthContext);
 
   const { addTransaction } = useContext(ExpenseContext);
 
@@ -28,10 +30,9 @@ const AddTransactionScreen = ({ navigation }) => {
         transaction_date: date,
         category,
       };
-      console.log('Submitting transaction:', transaction);
       await addTransaction(transaction);
-      console.log('Transaction added successfully');
       Alert.alert('Success', 'Transaction added successfully');
+      checkGoals();
     } catch (error) {
       console.error('Error adding transaction:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
@@ -46,6 +47,60 @@ const AddTransactionScreen = ({ navigation }) => {
     const currentDate = selectedDate || date;
     setShowDatePicker(false);
     setDate(currentDate);
+  };
+
+  const checkGoals = async () => {
+    try {
+      const response = await axios.get('/api/v1/goal/get-goal', {
+        headers: {
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+      const goals = response.data;
+      goals.forEach(async (goal) => {
+        if (goal.currentAmount > goal.amount) {
+          Alert.alert(
+            'Goal Exceeded!',
+            `You have exceeded your limit of ₹${goal.amount} in the category ${goal.category}.`
+          );
+        } else if (goal.alertAmount && goal.currentAmount >= goal.alertAmount && goal.currentAmount !== goal.amount) {
+          Alert.alert(
+            'Alert',
+            `You are approaching your limit of ₹${goal.amount} in the category ${goal.category} with an expense of ₹${goal.currentAmount}.`
+          );
+        } else if (goal.currentAmount === goal.amount) {
+          Alert.alert(
+            'Alert!',
+            `You have reached your limit of ₹${goal.amount} in the category ${goal.category}.`
+          );
+        }
+        const now = new Date().setHours(0, 0, 0, 0);
+        const endDate = new Date(goal.endDate).setHours(0, 0, 0, 0);
+        const dayAfterEndDate = new Date(endDate);
+        dayAfterEndDate.setDate(dayAfterEndDate.getDate() + 1);
+        if (now >= dayAfterEndDate.getTime() && goal.currentAmount <= goal.amount) {
+          Alert.alert(
+            'Goal Achieved!',
+            `Congratulations! You have achieved your goal of ₹${goal.amount} in the category ${goal.category}.`
+          );
+          await markGoalAsCompleted(goal._id); // Mark the goal as completed
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+    }
+  };
+
+  const markGoalAsCompleted = async (goalId) => {
+    try {
+      await axios.post(`/api/v1/goal/mark-completed/${goalId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error marking goal as completed:', error);
+    }
   };
 
   return (
@@ -93,7 +148,7 @@ const AddTransactionScreen = ({ navigation }) => {
           <Picker.Item label="Grocery" value="Grocery" />
           <Picker.Item label="Shopping" value="Shopping" />
           <Picker.Item label="Bills" value="Bills" />
-          <Picker.Item label="Debts" value="Depts" />
+          <Picker.Item label="Debts" value="Debts" />
           <Picker.Item label="Others" value="Others" />
         </Picker>
       </View>
@@ -132,7 +187,7 @@ const styles = StyleSheet.create({
   addIncomeTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1e90ff', // Adjust the color as needed
+    color: '#1e90ff',
   },
   input: {
     height: 40,

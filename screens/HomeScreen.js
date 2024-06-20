@@ -12,6 +12,7 @@ const HomeScreen = ({ navigation }) => {
   const [qrCode, setQrCode] = useState('');
   const [balance, setBalance] = useState(0);
   const [expense, setExpense] = useState(0);
+  const [goals, setGoals] = useState([]);
   const { transactions } = useContext(ExpenseContext);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const HomeScreen = ({ navigation }) => {
     };
 
     fetchQrCode();
+    fetchGoals(); // Fetch goals when component mounts
   }, [authState.user._id, authState.token]);
 
   useEffect(() => {
@@ -55,6 +57,19 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const fetchGoals = async () => {
+    try {
+      const response = await axios.get('/api/v1/goal/get-goal', {
+        headers: {
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+      setGoals(response.data);
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+    }
+  };
+
   const calculateBalanceAndExpense = () => {
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
@@ -74,6 +89,19 @@ const HomeScreen = ({ navigation }) => {
 
     const calculatedBalance = (totalIncome + totalCredits) - totalDebits;
     setBalance(calculatedBalance);
+
+    checkGoals(calculatedBalance); // Check goals after calculating balance
+  };
+
+  const checkGoals = (currentBalance) => {
+    goals.forEach(goal => {
+      if (goal.type === 'target' && currentBalance >= goal.amount) {
+        Alert.alert('Goal Achieved!', `You have achieved your goal of ₹${goal.amount} for this month.`);
+      }
+      if (goal.alertAmount && currentBalance <= goal.alertAmount) {
+        Alert.alert('Alert', `Your balance is equal to or below the set alert amount of ₹${goal.alertAmount}.`);
+      }
+    });
   };
 
   return (
@@ -125,6 +153,14 @@ const HomeScreen = ({ navigation }) => {
       <Button
         title="Investment Manager"
         onPress={() => navigation.navigate('StockApp')}
+      />
+      <Button
+        title="Goal Setter"
+        onPress={() => navigation.navigate('GoalListScreen')}
+      />
+      <Button
+        title="Rewards"
+        onPress={() => navigation.navigate('Rewards')}
       />
     </View>
   );

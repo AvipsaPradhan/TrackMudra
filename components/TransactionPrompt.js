@@ -50,9 +50,11 @@ const TransactionPrompt = ({ route, navigation }) => {
           Authorization: `Bearer ${state.token}`,
         },
       });
+
       if (response.data.success) {
         Alert.alert('Payment Successful', 'The payment was processed successfully.');
         await fetchTransactions();  // Fetch the latest transactions
+        await checkGoals(); // Check goals after payment
         navigation.goBack();
       } else {
         Alert.alert('Payment Failed', response.data.message);
@@ -60,6 +62,63 @@ const TransactionPrompt = ({ route, navigation }) => {
     } catch (error) {
       Alert.alert('Payment Error', 'There was an error processing the payment.');
       console.error('Error processing payment:', error);
+    }
+  };
+
+  const checkGoals = async () => {
+    try {
+      const response = await axios.get('/api/v1/goal/get-goal', {
+        headers: {
+          Authorization: `Bearer ${state.token}`,
+        },
+      });
+      const goals = response.data;
+
+      goals.forEach(async (goal) => {
+        const now = new Date().setHours(0, 0, 0, 0);
+        const endDate = new Date(goal.endDate).setHours(0, 0, 0, 0);
+        const dayAfterEndDate = new Date(endDate);
+        dayAfterEndDate.setDate(dayAfterEndDate.getDate() + 1);
+
+        if (goal.currentAmount > goal.amount) {
+          Alert.alert(
+            'Goal Exceeded!',
+            `You have exceeded your limit of ₹${goal.amount} in the category ${goal.category}.`
+          );
+        } else if (goal.alertAmount && goal.currentAmount >= goal.alertAmount && goal.currentAmount !== goal.amount) {
+          Alert.alert(
+            'Alert',
+            `You are approaching your limit of ₹${goal.amount} in the category ${goal.category} with an expense of ₹${goal.currentAmount}.`
+          );
+        } else if (goal.currentAmount === goal.amount) {
+          Alert.alert(
+            'Alert!',
+            `You have reached your limit of ₹${goal.amount} in the category ${goal.category}.`
+          );
+        }
+
+        if (now >= dayAfterEndDate.getTime() && goal.currentAmount <= goal.amount) {
+          Alert.alert(
+            'Goal Achieved!',
+            `Congratulations! You have achieved your goal of ₹${goal.amount} in the category ${goal.category}.`
+          );
+          await markGoalAsCompleted(goal._id); // Mark the goal as completed
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+    }
+  };
+
+  const markGoalAsCompleted = async (goalId) => {
+    try {
+      await axios.post(`/api/v1/goal/mark-completed/${goalId}`, {}, {
+        headers: {
+          Authorization: `Bearer ${state.token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error marking goal as completed:', error);
     }
   };
 
@@ -134,6 +193,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 20,
   },
+  label: {
+    width: '100%',
+    marginBottom: 10,
+  }
 });
 
 export default TransactionPrompt;

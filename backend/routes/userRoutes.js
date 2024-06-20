@@ -17,6 +17,7 @@ const {
   buyFund,
   getUserFunds,
   sellFund,
+  getRewardPoints,
 } = require("../controllers/userController");
 
 // router object
@@ -64,6 +65,8 @@ router.post('/funds/sell', requireSignIn, sellFund);
 router.get('/stocks/purchased', requireSignIn, getUserPurchasedStocks);
 
 router.post('/stocks/sell', requireSignIn, sellStock);
+
+router.get('/reward-points', requireSignIn, getRewardPoints);
 
 
 // export

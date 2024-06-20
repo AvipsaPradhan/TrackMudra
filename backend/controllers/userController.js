@@ -596,6 +596,19 @@ const sellFund = async (req, res) => {
   }
 };
 
+const getRewardPoints = async (req, res) =>{
+  try {
+    const user = await userModel.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ rewardPoints: user.rewardPoints });
+  } catch (error) {
+    console.error("Error fetching reward points:", error);
+    res.status(500).json({ message: "Failed to fetch reward points", error: error.message });
+  }
+};
 
 module.exports = {
   getUserQrCode,
@@ -615,4 +628,5 @@ module.exports = {
   buyFund,
   getUserFunds,
   sellFund,
+  getRewardPoints,
 };

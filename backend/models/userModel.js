@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema({
   },
   stocks: [stockSchema],
   funds: [fundSchema],
+  rewardPoints: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);

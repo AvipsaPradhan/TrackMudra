@@ -26,6 +26,8 @@ app.use('/api/v1/auth', require('./routes/userRoutes'));
 app.use('/api/v1/transaction',require('./routes/transactionRoutes'));
 app.use('/api/v1/income',require('./routes/incomeRoutes'));
 app.use('/api/v1/stock', require('./routes/stockRoutes'));
+app.use('/api/v1/goal', require('./routes/goalRoutes'));
+
 
 // HOME
 app.get("/", (req, res) => {
