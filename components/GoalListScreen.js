@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   Alert,
 } from "react-native";
 import axios from "axios";
@@ -34,8 +33,37 @@ const GoalListScreen = ({ navigation }) => {
           Authorization: `Bearer ${authState.token}`,
         },
       });
-      setGoals(response.data);
-      checkGoals(response.data);
+      const updatedGoals = response.data;
+      await Promise.all(
+        updatedGoals.map(async (goal) => {
+          const transactions = await axios.get('/api/v1/transaction/gettransactions', {
+            headers: {
+              Authorization: `Bearer ${authState.token}`,
+            },
+          });
+          const endDate = new Date(goal.endDate);
+          endDate.setHours(23, 59, 59, 999); // Set end date to end of the day
+          const totalExpense = transactions.data
+            .filter(t =>
+              t.category === goal.category &&
+              t.transaction_type === 'debit' &&
+              new Date(t.transaction_date) >= new Date(goal.startDate) &&
+              new Date(t.transaction_date) <= endDate
+            )
+            .reduce((acc, t) => acc + t.amount, 0);
+
+          goal.currentAmount = totalExpense;
+
+          // Update the current amount in the database
+          await axios.put(`/api/v1/goal/update-goal/${goal._id}`, { currentAmount: totalExpense }, {
+            headers: {
+              Authorization: `Bearer ${authState.token}`,
+            },
+          });
+        })
+      );
+      setGoals(updatedGoals);
+      checkGoals(updatedGoals);
     } catch (error) {
       console.error(error);
     }
@@ -78,7 +106,7 @@ const GoalListScreen = ({ navigation }) => {
             ]
           );
           // Remove the completed goal from the current goals list
-          setGoals(goals.filter(goal => goal._id !== goal._id));
+          setGoals(goals.filter(g => g._id !== g._id));
         }
       }
     }

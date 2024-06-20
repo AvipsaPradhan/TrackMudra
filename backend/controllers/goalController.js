@@ -106,3 +106,21 @@ exports.getCompletedGoals = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch completed goals", error: error.message });
   }
 };
+
+exports.updateGoal = async (req, res) => {
+  try {
+    const goal = await Goal.findById(req.params.goalId);
+    if (!goal) {
+      return res.status(404).json({ message: "Goal not found" });
+    }
+
+    const { currentAmount } = req.body;
+    goal.currentAmount = currentAmount;
+
+    await goal.save();
+    res.status(200).json({ message: "Goal updated successfully", goal });
+  } catch (error) {
+    console.error("Error updating goal:", error);
+    res.status(500).json({ message: "Failed to update goal", error: error.message });
+  }
+};

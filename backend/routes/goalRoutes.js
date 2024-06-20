@@ -1,6 +1,6 @@
 const express = require('express');
 const { requireSignIn } = require('../controllers/userController');
-const { addGoal, getGoals, markedGoals, getCompletedGoals } = require('../controllers/goalController');
+const { addGoal, getGoals, markedGoals, getCompletedGoals, updateGoal } = require('../controllers/goalController');
 
 const router = express.Router();
 
@@ -15,5 +15,7 @@ router.post('/mark-completed/:goalId', requireSignIn, markedGoals);
 
 // Get completed goals
 router.get('/get-completed-goals', requireSignIn,getCompletedGoals);
+
+router.put('/update-goal/:goalId', requireSignIn, updateGoal);
 
 module.exports = router;

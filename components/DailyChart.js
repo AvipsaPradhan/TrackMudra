@@ -1,8 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Dimensions, StyleSheet, Text, FlatList,TouchableOpacity } from 'react-native';
+import { View, Dimensions, StyleSheet, Text, FlatList, TouchableOpacity } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
 import { ExpenseContext } from '../context/expenseContext';
-import { format, isToday, subDays, addDays, isSameDay } from 'date-fns';
+import { format, isSameDay, subDays, addDays } from 'date-fns';
 import NavigationArrows from '../components/NavigationArrows';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +24,10 @@ const DailyChart = () => {
   }, [route.params]);
 
   const dailyData = processData(transactions, currentDate);
-  const dailyTransactions = transactions.filter(t =>isSameDay(new Date(t.transaction_date), currentDate));
+  const dailyTransactions = transactions
+    .filter(t => isSameDay(new Date(t.transaction_date), currentDate))
+    .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)); // Sort by date in descending order
+
   const totalExpense = dailyTransactions
     .filter(t => t.transaction_type === 'debit')
     .reduce((acc, transaction) => acc + transaction.amount, 0);
@@ -67,7 +70,6 @@ const DailyChart = () => {
     }
   };
 
-
   return (
     <View style={styles.container}>
       <Picker
@@ -101,7 +103,7 @@ const DailyChart = () => {
       <Text style={styles.transactionTitle}>Transactions</Text>
       <FlatList
         data={dailyTransactions}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item._id.toString()}
         renderItem={({ item }) => (
           <View style={styles.transactionItem}>
             <View style={styles.transactionDetails}>
@@ -144,9 +146,9 @@ const processData = (transactions, currentDate) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     alignItems: 'center',
-    
+    backgroundColor: '#fff',
   },
   chartTitle: {
     fontSize: 18,
@@ -157,13 +159,13 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 16,
     padding: 5,
-    paddingRight: 0
+    paddingRight: 0,
   },
   totalExpense: {
     fontSize: 18,
     fontWeight: 'bold',
     marginVertical: 10,
-    paddingTop: 10
+    paddingTop: 10,
   },
   transactionTitle: {
     fontSize: 18,
@@ -202,8 +204,8 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    top:470,
-    right: 0,
+    bottom: 30,
+    right: 30,
     backgroundColor: '#1e90ff',
     width: 60,
     height: 60,

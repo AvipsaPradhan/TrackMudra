@@ -32,7 +32,7 @@ const AddTransactionScreen = ({ navigation }) => {
       };
       await addTransaction(transaction);
       Alert.alert('Success', 'Transaction added successfully');
-      checkGoals();
+      await checkGoals(category); // Ensure checkGoals is awaited
     } catch (error) {
       console.error('Error adding transaction:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
@@ -49,15 +49,41 @@ const AddTransactionScreen = ({ navigation }) => {
     setDate(currentDate);
   };
 
-  const checkGoals = async () => {
+  const checkGoals = async (transactionCategory) => {
     try {
       const response = await axios.get('/api/v1/goal/get-goal', {
         headers: {
           Authorization: `Bearer ${authState.token}`,
         },
       });
-      const goals = response.data;
-      goals.forEach(async (goal) => {
+      const goals = response.data.filter(goal => goal.category === transactionCategory);
+      for (const goal of goals) {
+        // Fetch transactions to update current amount
+        const transactionsResponse = await axios.get('/api/v1/transaction/gettransactions', {
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+          },
+        });
+        const transactions = transactionsResponse.data;
+
+        const endDate = new Date(goal.endDate).setHours(23, 59, 59, 999);
+        const totalExpense = transactions
+          .filter(t =>
+            t.category === goal.category &&
+            t.transaction_type === 'debit' &&
+            new Date(t.transaction_date) >= new Date(goal.startDate) &&
+            new Date(t.transaction_date) <= endDate
+          )
+          .reduce((acc, t) => acc + t.amount, 0);
+        goal.currentAmount = totalExpense;
+
+        // Update goal current amount
+        await axios.put(`/api/v1/goal/update-goal/${goal._id}`, { currentAmount: totalExpense }, {
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+          },
+        });
+
         if (goal.currentAmount > goal.amount) {
           Alert.alert(
             'Goal Exceeded!',
@@ -74,10 +100,12 @@ const AddTransactionScreen = ({ navigation }) => {
             `You have reached your limit of ₹${goal.amount} in the category ${goal.category}.`
           );
         }
+
         const now = new Date().setHours(0, 0, 0, 0);
-        const endDate = new Date(goal.endDate).setHours(0, 0, 0, 0);
-        const dayAfterEndDate = new Date(endDate);
+        const goalEndDate = new Date(goal.endDate).setHours(0, 0, 0, 0);
+        const dayAfterEndDate = new Date(goalEndDate);
         dayAfterEndDate.setDate(dayAfterEndDate.getDate() + 1);
+        
         if (now >= dayAfterEndDate.getTime() && goal.currentAmount <= goal.amount) {
           Alert.alert(
             'Goal Achieved!',
@@ -85,7 +113,7 @@ const AddTransactionScreen = ({ navigation }) => {
           );
           await markGoalAsCompleted(goal._id); // Mark the goal as completed
         }
-      });
+      }
     } catch (error) {
       console.error('Error fetching goals:', error);
     }

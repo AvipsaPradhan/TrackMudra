@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF9D00',
   },
   points: {
-    fontSize: 45,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
   },
